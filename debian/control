@@ -1,0 +1,28 @@
+Source: golang-github-allegro-bigcache
+Maintainer: Debian Go Packaging Team <team+pkg-go@tracker.debian.org>
+Uploaders:
+ Guillem Jover <gjover@sipwise.com>,
+Section: golang
+Testsuite: autopkgtest-pkg-go
+Priority: optional
+Build-Depends:
+ debhelper-compat (= 13),
+ dh-golang,
+ golang-any,
+Standards-Version: 4.5.1
+Vcs-Browser: https://salsa.debian.org/go-team/packages/golang-github-allegro-bigcache
+Vcs-Git: https://salsa.debian.org/go-team/packages/golang-github-allegro-bigcache.git
+Homepage: https://github.com/allegro/bigcache
+Rules-Requires-Root: no
+XS-Go-Import-Path: github.com/allegro/bigcache
+
+Package: golang-github-allegro-bigcache-dev
+Architecture: all
+Depends:
+ ${misc:Depends},
+Description: efficient cache for gigabytes of data written in Go (library)
+ Fast, concurrent, evicting in-memory cache written to keep big number of
+ entries without impact on performance. BigCache keeps entries on heap
+ but omits GC for them. To achieve that, operations on byte slices take
+ place, therefore entries (de)serialization in front of the cache will
+ be needed in most use cases.

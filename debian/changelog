@@ -1,0 +1,5 @@
+golang-github-allegro-bigcache (2.2.5-1) UNRELEASED; urgency=medium
+
+  * Initial release (Closes: #953658)
+
+ -- Guillem Jover <gjover@sipwise.com>  Fri, 11 Dec 2020 00:40:48 +0100
