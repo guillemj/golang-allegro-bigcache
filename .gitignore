@@ -9,5 +9,5 @@
 /server/server_ope*
 /server/server_lin*
 CHANGELOG.md
-
-.pc
+.pc/
+_build/
