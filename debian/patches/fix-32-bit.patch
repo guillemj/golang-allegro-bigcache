@@ -1,0 +1,134 @@
+Description: Fix atomic usage on 32-bit systems
+ The atomic package requires aligned variables, but this is not happening
+ for the variables on the stack. Instead change the types for these to
+ 32-bit variables as there should be no need to track 64-bit stats.
+Author: Guillem Jover <gjover@sipwise.com>
+Origin: vendor
+Forwarded: no
+Last-Update: 2020-12-30
+
+--- golang-github-allegro-bigcache-2.2.5.orig/bigcache_test.go
++++ golang-github-allegro-bigcache-2.2.5/bigcache_test.go
+@@ -580,10 +580,10 @@ func TestCacheStats(t *testing.T) {
+ 
+ 	// then
+ 	stats := cache.Stats()
+-	assertEqual(t, stats.Hits, int64(10))
+-	assertEqual(t, stats.Misses, int64(10))
+-	assertEqual(t, stats.DelHits, int64(10))
+-	assertEqual(t, stats.DelMisses, int64(10))
++	assertEqual(t, stats.Hits, int32(10))
++	assertEqual(t, stats.Misses, int32(10))
++	assertEqual(t, stats.DelHits, int32(10))
++	assertEqual(t, stats.DelMisses, int32(10))
+ }
+ func TestCacheEntryStats(t *testing.T) {
+ 	t.Parallel()
+@@ -722,7 +722,7 @@ func TestWriteAndReadParallelSameKeyWith
+ 
+ 	wg.Wait()
+ 
+-	assertEqual(t, Stats{Hits: int64(n * ntest)}, cache.Stats())
++	assertEqual(t, Stats{Hits: int32(n * ntest)}, cache.Stats())
+ 	assertEqual(t, ntest*n, int(cache.KeyMetadata(key).RequestCount))
+ }
+ 
+@@ -946,7 +946,7 @@ func TestHashCollision(t *testing.T) {
+ 	assertEqual(t, []byte(nil), cachedValue)
+ 
+ 	assertEqual(t, "Collision detected. Both %q and %q have the same hash %x", ml.lastFormat)
+-	assertEqual(t, cache.Stats().Collisions, int64(1))
++	assertEqual(t, cache.Stats().Collisions, int32(1))
+ }
+ 
+ func TestNilValueCaching(t *testing.T) {
+@@ -1025,7 +1025,7 @@ func TestEntryNotPresent(t *testing.T) {
+ 	value, resp, err := cache.GetWithInfo("blah")
+ 	assertEqual(t, ErrEntryNotFound, err)
+ 	assertEqual(t, resp.EntryStatus, RemoveReason(0))
+-	assertEqual(t, cache.Stats().Misses, int64(1))
++	assertEqual(t, cache.Stats().Misses, int32(1))
+ 	assertEqual(t, []byte(nil), value)
+ }
+ 
+--- golang-github-allegro-bigcache-2.2.5.orig/shard.go
++++ golang-github-allegro-bigcache-2.2.5/shard.go
+@@ -354,11 +354,11 @@ func (s *cacheShard) capacity() int {
+ 
+ func (s *cacheShard) getStats() Stats {
+ 	var stats = Stats{
+-		Hits:       atomic.LoadInt64(&s.stats.Hits),
+-		Misses:     atomic.LoadInt64(&s.stats.Misses),
+-		DelHits:    atomic.LoadInt64(&s.stats.DelHits),
+-		DelMisses:  atomic.LoadInt64(&s.stats.DelMisses),
+-		Collisions: atomic.LoadInt64(&s.stats.Collisions),
++		Hits:       atomic.LoadInt32(&s.stats.Hits),
++		Misses:     atomic.LoadInt32(&s.stats.Misses),
++		DelHits:    atomic.LoadInt32(&s.stats.DelHits),
++		DelMisses:  atomic.LoadInt32(&s.stats.DelMisses),
++		Collisions: atomic.LoadInt32(&s.stats.Collisions),
+ 	}
+ 	return stats
+ }
+@@ -379,7 +379,7 @@ func (s *cacheShard) getKeyMetadata(key
+ }
+ 
+ func (s *cacheShard) hit(key uint64) {
+-	atomic.AddInt64(&s.stats.Hits, 1)
++	atomic.AddInt32(&s.stats.Hits, 1)
+ 	if s.statsEnabled {
+ 		s.lock.Lock()
+ 		s.hashmapStats[key]++
+@@ -388,26 +388,26 @@ func (s *cacheShard) hit(key uint64) {
+ }
+ 
+ func (s *cacheShard) hitWithoutLock(key uint64) {
+-	atomic.AddInt64(&s.stats.Hits, 1)
++	atomic.AddInt32(&s.stats.Hits, 1)
+ 	if s.statsEnabled {
+ 		s.hashmapStats[key]++
+ 	}
+ }
+ 
+ func (s *cacheShard) miss() {
+-	atomic.AddInt64(&s.stats.Misses, 1)
++	atomic.AddInt32(&s.stats.Misses, 1)
+ }
+ 
+ func (s *cacheShard) delhit() {
+-	atomic.AddInt64(&s.stats.DelHits, 1)
++	atomic.AddInt32(&s.stats.DelHits, 1)
+ }
+ 
+ func (s *cacheShard) delmiss() {
+-	atomic.AddInt64(&s.stats.DelMisses, 1)
++	atomic.AddInt32(&s.stats.DelMisses, 1)
+ }
+ 
+ func (s *cacheShard) collision() {
+-	atomic.AddInt64(&s.stats.Collisions, 1)
++	atomic.AddInt32(&s.stats.Collisions, 1)
+ }
+ 
+ func initNewShard(config Config, callback onRemoveCallback, clock clock) *cacheShard {
+--- golang-github-allegro-bigcache-2.2.5.orig/stats.go
++++ golang-github-allegro-bigcache-2.2.5/stats.go
+@@ -3,13 +3,13 @@ package bigcache
+ // Stats stores cache statistics
+ type Stats struct {
+ 	// Hits is a number of successfully found keys
+-	Hits int64 `json:"hits"`
++	Hits int32 `json:"hits"`
+ 	// Misses is a number of not found keys
+-	Misses int64 `json:"misses"`
++	Misses int32 `json:"misses"`
+ 	// DelHits is a number of successfully deleted keys
+-	DelHits int64 `json:"delete_hits"`
++	DelHits int32 `json:"delete_hits"`
+ 	// DelMisses is a number of not deleted keys
+-	DelMisses int64 `json:"delete_misses"`
++	DelMisses int32 `json:"delete_misses"`
+ 	// Collisions is a number of happened key-collisions
+-	Collisions int64 `json:"collisions"`
++	Collisions int32 `json:"collisions"`
+ }
