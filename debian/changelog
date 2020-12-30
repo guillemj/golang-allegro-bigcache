@@ -1,6 +1,7 @@
 golang-github-allegro-bigcache (2.2.5-3) UNRELEASED; urgency=medium
 
   * Fix atomic usage on 32-bit systems.
+  * Exclude server code, which we do not need.
 
  -- Guillem Jover <gjover@sipwise.com>  Wed, 30 Dec 2020 15:58:28 +0100
 

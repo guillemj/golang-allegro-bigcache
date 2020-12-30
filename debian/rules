@@ -1,5 +1,8 @@
 #!/usr/bin/make -f
 
+export DH_GOLANG_EXCLUDES := github.com/allegro/bigcache/server
+export DH_GOLANG_EXCLUDES_ALL := 1
+
 %:
 	dh $@ --builddirectory=_build --buildsystem=golang --with=golang
 
