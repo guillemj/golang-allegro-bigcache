@@ -18,6 +18,7 @@ XS-Go-Import-Path: github.com/allegro/bigcache
 
 Package: golang-github-allegro-bigcache-dev
 Architecture: all
+Multi-Arch: foreign
 Depends:
  ${misc:Depends},
 Description: efficient cache for gigabytes of data written in Go (library)
